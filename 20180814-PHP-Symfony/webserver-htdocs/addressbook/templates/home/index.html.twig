@@ -1,0 +1,121 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Carnet d'adresses{% endblock %}
+
+{% block stylesheets %}
+<!-- Include Font Awesome -->
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
+
+<!-- Include Bootstrap's stylesheet -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+<!-- Include app specific stylesheet -->
+<link rel="stylesheet" href="css/addressbook.css">
+{% endblock %}
+
+{% block javascripts %}
+<!-- Include JQuery (required by Bootstrap) -->
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+
+<!-- Include Popper (required by Bootstrap) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+
+<!-- Include Bootstrap -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+<!-- Include Knockout.js -->
+<script type='text/javascript' src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.2/knockout-min.js" crossorigin="anonymous"></script>
+
+<!-- Include app specific scripts -->
+<script type='text/javascript' src="js/addressbook.js"></script>
+{% endblock %}
+
+{% block body %}
+<div class="loader-frame" data-bind="visible: mustShowSpinner">
+    <div class="loader-spinner">
+        <div class="loader-spinner2">
+        </div>
+    </div>
+    <p>TRANSFERRING...</p>
+</div>
+<div id="top_bar" class="container">
+</div>
+<div id="person_index" class="container invisible" data-bind="visible: mustShowIndex">
+    <div class="row">
+        <div class="col-12">
+            <h1 style="text-align: center;">Carnet d'adresses</h1>
+        </div>
+        <table class="table table-hover table-striped">
+            <thead>
+                <tr>
+                    <th class="d-none d-md-table-cell" scope="col">#</th>
+                    <th scope="col">Nom</th>
+                    <th scope="col">Prénom</th>
+                    <th class="d-none d-sm-table-cell" scope="col">Téléphone</th>
+                    <th class="d-none d-xl-table-cell" scope="col">Email</th>
+                    <th scope="col" align="center" style="text-align: right;">
+                        <button class="btn btn-light btn-sm" data-bind="click: onRefreshButtonClicked, disable: isEditingList">
+                            <i class="fas fa-sync fa-sm" style="color: black;"></i>
+                        </button>
+                        <button class="btn btn-light btn-sm" data-bind="click: onNewItemButtonClicked, disable: isEditingList">
+                            <i class="fas fa-plus fa-sm" style="color: black;"></i>
+                        </button>
+                        <button class="btn btn-light btn-sm" data-bind="click: onEditListButtonClicked, css: { editing: isEditingList }">
+                            <i class="fas fa-pencil-alt fa-sm" style="color: black;"></i>
+                        </button>
+                    </th>
+                </tr>
+            </thead>
+            <tbody data-bind="foreach: persons">
+                <tr data-bind="click: $parent.onItemClicked">
+                    <th class="d-none d-md-table-cell" scope="row" data-bind="text: id"></th>
+                    <td data-bind="text: lastname"></td>
+                    <td data-bind="text: firstname"></td>
+                    <td class="d-none d-sm-table-cell" data-bind="text: telephone"></td>
+                    <td class="d-none d-xl-table-cell" data-bind="text: email"></td>
+                    <td align="right">
+                        <button class="btn btn-danger btn-sm btn-delete" data-bind="click: $parent.onDeleteItemButtonClicked, visible: $parent.isEditingList ">
+                            <i class="far fa-trash-alt fa-xs" style="color: white;"></i>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<div id="person_form" class="container invisible" data-bind="visible: mustShowForm">
+    <div class="d-flex justify-content-between mb-3">
+        <div class="p-2">
+            <button class="btn btn-light btn-sm" data-bind="click: onBackButtonClicked">
+                <i class="fas fa-chevron-left fa-sm" style="color: black;"></i>
+            </button>
+        </div>
+        <div class="p-2">
+            <h1 style="text-align: center;">
+                <span data-bind="visible: isCreateAction">Nouveau contact</span>
+                <span data-bind="visible: isReadAction">Détails</span>
+                <span data-bind="visible: isUpdateAction">Modification</span>
+            </h1>
+        </div>
+        <div class="p-2">
+            <button class="btn btn-light btn-sm" data-bind="click: onEditItemButtonClicked, visible: mustShowEditItemButton, css: { editing: isEditingItem }">
+                <i class="fas fa-pencil-alt fa-sm" style="color: black;"></i>
+            </button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            {{form_start(person_form)}}
+            {{form_widget(person_form)}}
+                <div class="d-flex justify-content-end">
+                        <button type="submit" value="submit" class="btn btn-primary" data-bind="visible: mustShowSubmitCancelButton">
+                            <span data-bind="visible: isCreateAction">Créer</span>
+                            <span data-bind="visible: isUpdateAction">Enregistrer</span>
+                        </button>
+                        <button class="btn btn-default" data-bind="click: onCancelButtonClicked, visible: mustShowSubmitCancelButton">Annuler</button>
+                </div>
+            {{form_end(person_form)}}
+        </div>
+    </div>
+</div>
+{% endblock %}

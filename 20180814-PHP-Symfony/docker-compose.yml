@@ -1,0 +1,57 @@
+# vim: set tabstop=2 shiftwidth=2 expandtab:
+
+version: '3.2'
+
+networks:
+   common-nw:
+      external: false
+
+services:
+  database:
+    container_name: database
+    image: mariadb:latest
+    networks:
+      - common-nw
+    ports:
+      - "3306:3306"
+    tty: true
+    stdin_open: true
+    environment:
+      - MYSQL_ROOT_PASSWORD=Password1!
+      - MYSQL_DATABASE=addressbook
+      - MYSQL_USER=addressbook
+      - MYSQL_PASSWORD=Password1!
+    volumes:
+        - type: bind
+          source: ./mariadb-storage
+          target: /var/lib/mysql
+        - type: bind
+          source: ./mariadb-initdata
+          target: /docker-entrypoint-initdb.d
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  webserver:
+    container_name: webserver
+    build:
+      context: .
+      dockerfile: webserver-image_dockerfile.yml
+      args:
+        DOCUMENT_ROOT: /var/www/html/addressbook/public
+    networks:
+      - common-nw
+    ports:
+      - "8888:80"
+    tty: true
+    stdin_open: true
+    depends_on:
+      - database
+    volumes:
+      - type: bind
+        source: ./webserver-htdocs
+        target: /var/www/html
+      - type: bind
+        source: ./webserver-opt
+        target: /opt/
+    environment:
+      - PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt
+    entrypoint: /bin/bash -c "cd /var/www/html/addressbook/ && composer install && sudo docker-php-entrypoint apache2-foreground"

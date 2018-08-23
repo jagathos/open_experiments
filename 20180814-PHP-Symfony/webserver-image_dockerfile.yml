@@ -1,0 +1,75 @@
+# vim: set tabstop=2 shiftwidth=2 expandtab:
+#
+# Builds an image containing Apache 2, PHP7.2 and a few additional extensions
+#
+FROM php:7.2-apache
+LABEL maintainer="jagathos"
+LABEL Description="M2 TED - Développement PHP - Web tier"
+
+#
+# Make www-root more dynamic
+#
+ARG DOCUMENT_ROOT=/var/www/html
+ENV DOCUMENT_ROOT $DOCUMENT_ROOT
+RUN sed -ri -e "s!/var/www/html!$DOCUMENT_ROOT!g" /etc/apache2/sites-available/*.conf
+RUN sed -ri -e "s!/var/www/!$DOCUMENT_ROOT!g" /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+#
+# Update APT cache
+#
+RUN apt-get update
+
+#
+# Install sudo
+#
+RUN apt-get install -y sudo
+
+#
+# Install Composer's dependencies
+#
+RUN apt-get install -y unzip git
+
+#
+# Install Node.js and YARN?
+#
+#RUN apt-get install -y gnupg
+#RUN curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
+#RUN apt-get install -y nodejs
+#RUN npm install -g yarn
+
+#
+# Create a dedicated standard user instead of running everything as root
+#
+RUN useradd --create-home composer
+
+#
+# Give standard user sudo right to run Apache
+#
+RUN echo "composer ALL=(ALL) NOPASSWD: /usr/local/bin/docker-php-entrypoint" > /etc/sudoers.d/composer
+
+#
+# Install PHP extensions
+#
+RUN docker-php-ext-install pdo pdo_mysql opcache
+
+#
+#
+#
+COPY webserver-image_php_config/* /usr/local/etc/php/conf.d/
+
+#
+# Run container as standard user
+#
+USER composer:www-data
+
+#
+# Define entrypoint and default arguments
+#
+ENTRYPOINT ["sudo", "docker-php-entrypoint"]
+CMD ["apache2-foreground"]
+
+#
+# Declare volumes and exposed ports
+#
+VOLUME /var/www/html/
+EXPOSE 80
